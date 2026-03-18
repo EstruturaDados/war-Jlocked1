@@ -1,7 +1,7 @@
 // ============================================================================
 //         PROJETO WAR ESTRUTURADO - DESAFIO DE CÓDIGO
 // ============================================================================
-//        
+//
 // ============================================================================
 //
 // OBJETIVOS:
@@ -15,24 +15,23 @@
 // ============================================================================
 
 // Inclusão das bibliotecas padrão necessárias para entrada/saída, alocação de memória, manipulação de strings e tempo.
-
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 // --- Constantes Globais ---
 // Definem valores fixos para o número de territórios, missões e tamanho máximo de strings, facilitando a manutenção.
-
-// Constante global para o número de regioes
-#define MAX_REGIONS 5
+int TAM_USER;
 
 // --- Estrutura de Dados ---
 // Define a estrutura para um território, contendo seu nome, a cor do exército que o domina e o número de tropas.
-
-// Estrutura heterogenea de um territorio
 typedef struct
 {
-    char name[20];
-    char color[20];
-    int qtdtroops;
+    char name[30];
+    char color[10];
+    int troops;
+    int dadoResultado;
 } region;
 
 // --- Protótipos das Funções ---
@@ -60,7 +59,41 @@ typedef struct
 // - Pausa a execução para que o jogador possa ler os resultados antes da próxima rodada.
 // 3. Limpeza:
 // - Ao final do jogo, libera a memória alocada para o mapa para evitar vazamentos de memória.
-void main()
+void atacar(region *atacante, region *defensor)
+{
+    srand(time(NULL));
+
+    atacante->dadoResultado = rand() % 6 + 1;
+    defensor->dadoResultado = rand() % 6 + 1;
+
+    if (atacante->dadoResultado > defensor->dadoResultado)
+    {
+        printf("%s rolou o dado e saiu: %d\n\n", atacante->name, atacante->dadoResultado);
+        defensor->troops--;
+        printf("VITORIA DO ATAQUE! o defensor perdeu 1 tropa\n\n");
+    }
+    else if (atacante->dadoResultado < defensor->dadoResultado)
+    {
+        printf("%s rolou o dado e saiu: %d\n\n", defensor->name, defensor->dadoResultado);
+        atacante->troops--;
+        printf("VITORIA DO DEFENSOR! o atacante perdeu 1 tropa\n\n");
+    }
+    else
+    {
+        printf("Ambas as tropas recuaram, resultado de ambos os dados: %d\n\n", atacante->dadoResultado);
+        printf("EMPATE! Ambos perderam 1 tropa!\n\n");
+        atacante->troops--;
+        defensor->troops--;
+    }
+    // Verifica quando um territorio é conquistado
+    if(defensor->troops == 0) {
+        printf("O defensor %s foi conquistado pelo atacante %s!\n\n", defensor->name, atacante->name);
+    } else if(atacante->troops == 0) {
+        printf("O atacante %s foi conquistado pelo defensor %s!\n\n", atacante->name, defensor->name);
+    }
+}
+
+int main()
 {
     printf("------------------------------\n");
     printf("Welcome to War Game!\n");
@@ -68,38 +101,87 @@ void main()
     printf("------------------------------\n");
 
     // Coleção de arrays com estruturas heterogeneas e tamanho definido
-    region territorios[MAX_REGIONS];
+    printf("Digite o total de territorios: ");
+    scanf("%d", &TAM_USER);
+    region *territorios = (region *)calloc(TAM_USER, sizeof(region *));
+    if (territorios == NULL)
+    {
+        printf("Falha ao alocar memória\n");
+        return 1; // Encerra o programa com código de erro
+    }
+    getchar(); // Limpa o buffer do teclado para a próxima entrada
 
     // Loop para registrar os territorios
-    for (int i = 0; i < MAX_REGIONS; i++)
+    for (int i = 0; i < TAM_USER; i++)
     {
         printf("\nRegion %d\n", i + 1);
         printf("Type Name: ");
-        fgets(territorios[i].name, 20, stdin);
+        fgets(territorios[i].name, 30, stdin);
         territorios[i].name[strcspn(territorios[i].name, "\n")] = '\0'; // Remove o '\n' do final da string
         printf("Type Color: ");
-        fgets(territorios[i].color, 20, stdin);
+        fgets(territorios[i].color, 10, stdin);
         territorios[i].color[strcspn(territorios[i].color, "\n")] = '\0'; // Remove o '\n' do final da string
         printf("Type Number of troops: ");
-        scanf("%d", &territorios[i].qtdtroops);
+        scanf("%d", &territorios[i].troops);
+        getchar(); // Limpa o buffer do teclado para a próxima entrada
     }
 
-    printf("------------------------------\n");
-    printf("Registered Territories:\n");
-    printf("------------------------------\n");
-
-    // Loop para exibir os territorios registrados
-    for (int i = 0; i < MAX_REGIONS; i++)
+    while (1)
     {
-        printf("\n================================\n");
-        printf("Territory %d:\n", i + 1);
-        printf("Name: %s\n", territorios[i].name);
-        printf("Color: %s\n", territorios[i].color);
-        printf("Number of troops: %d\n", territorios[i].qtdtroops);
-        printf("================================\n");
+        printf("\n================================\n\n");
+        printf("  MAPA DO MUNDO - ESTADO ATUAL   ");
+        printf("\n\n================================\n\n");
+
+        // Loop para exibir os territorios registrados
+        for (int i = 0; i < TAM_USER; i++)
+        {
+            printf("Territory %d: (Name: %s, Color: %s, Troops: %d)\n", i + 1,
+                   territorios[i].name,
+                   territorios[i].color,
+                   territorios[i].troops);
+        }
+
+        printf("\nLet the games begin!\n");
+        printf(" FASE DE ATAQUE \n");
+        printf("Escolha um territorio atacante (1 a %d, ou 0 para sair)\n", TAM_USER);
+
+        int escolha1, escolha2;
+
+        scanf("%d", &escolha1);
+        if (escolha1 == 0)
+            break;
+        escolha1 = escolha1 - 1;
+
+        printf("Escolha um territorio defensor (1 a %d, ou 0 para sair)\n", TAM_USER);
+        scanf("%d", &escolha2);
+        if (escolha2 == 0)
+            break;
+        escolha2 = escolha2 - 1;
+
+        // Range das escolhas e verificação de territórios iguais
+        if (escolha1 == escolha2 || escolha1 < 0 || escolha1 >= TAM_USER || escolha2 < 0 || escolha2 >= TAM_USER)
+        {   
+            if (escolha1 == escolha2)
+            {
+                printf("Escolha um territorio diferente do atacante\n");
+            }
+            else
+            {
+                printf("Escolha um territorio válido (entre 1 e %d)\n", TAM_USER);
+            }
+            continue;
+        }
+
+        atacar(&territorios[escolha1], &territorios[escolha2]);
+
+        getchar(); // Limpa o buffer do teclado para a próxima entrada
+        printf("Pressione Enter para continuar...");
+        getchar();
     }
 
-    printf("\nLet the games begin! \n");
+    free(territorios); // Libera a memória alocada para os territórios
+
+    return 0;
 }
 
 // --- Implementação das Funções ---
